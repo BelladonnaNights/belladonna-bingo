@@ -297,7 +297,6 @@ body.mp-open #mp-tab{display:none}
   <div class="nav-tabs">
     <button class="nav-tab active" id="tab-host" onclick="showPage('host')">Host Tool</button>
     <button class="nav-tab" id="tab-cards" onclick="showPage('cards')">Card Generator</button>
-    <button class="nav-tab" id="tab-player" onclick="showPage('player')">Player Card</button>
     <a class="nav-tab" id="tab-tiebreaker" onclick="openTiebreaker()" style="text-decoration:none;cursor:pointer">Tie Breaker</a>
     <a class="nav-tab" id="tab-fs" onclick="mpFullscreen()" title="Fullscreen the whole screen (Esc to leave)" style="text-decoration:none;cursor:pointer">⛶ Fullscreen</a>
   </div>
@@ -806,7 +805,7 @@ function showPage(page,skipHistory){
   ['host','cards','player'].forEach(p=>{
     document.getElementById('page-'+p).classList.toggle('active',p===page);
     document.getElementById('page-'+p).style.display=p===page?'':'none';
-    document.getElementById('tab-'+p).classList.toggle('active',p===page);
+    const _tb=document.getElementById('tab-'+p); if(_tb)_tb.classList.toggle('active',p===page);
   });
   document.body.classList.toggle('player-mode',page==='player');
   const backLink=document.getElementById('back-link');
