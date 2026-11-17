@@ -2203,8 +2203,8 @@ html.p-narrow .np-right{display:none}
                   <div class="settings-label-sub">Seconds at end of song</div>
                 </div>
                 <div class="range-wrap">
-                  <input type="range" class="range-input" id="def-xfade" min="0" max="30" value="8" oninput="document.getElementById('val-def-xfade').textContent=this.value+'s';saveDefaultSetting('crossfade',parseFloat(this.value))">
-                  <span class="range-val" id="val-def-xfade">8s</span>
+                  <input type="range" class="range-input" id="def-xfade" min="0" max="30" value="5" oninput="document.getElementById('val-def-xfade').textContent=this.value+'s';saveDefaultSetting('crossfade',parseFloat(this.value))">
+                  <span class="range-val" id="val-def-xfade">5s</span>
                 </div>
               </div>
               <div class="settings-row">
@@ -2213,8 +2213,8 @@ html.p-narrow .np-right{display:none}
                   <div class="settings-label-sub">Seconds per song (0 = full song)</div>
                 </div>
                 <div class="range-wrap">
-                  <input type="range" class="range-input" id="def-timer" min="0" max="300" step="15" value="0" oninput="document.getElementById('val-def-timer').textContent=(this.value?this.value+'s':'Off');saveDefaultSetting('timer',parseFloat(this.value))">
-                  <span class="range-val" id="val-def-timer">Off</span>
+                  <input type="range" class="range-input" id="def-timer" min="0" max="300" step="5" value="40" oninput="document.getElementById('val-def-timer').textContent=(this.value?this.value+'s':'Off');saveDefaultSetting('timer',parseFloat(this.value))">
+                  <span class="range-val" id="val-def-timer">40s</span>
                 </div>
               </div>
               <div class="settings-row">
@@ -2269,8 +2269,8 @@ html.p-narrow .np-right{display:none}
                   <div class="settings-label-sub">Seconds at end of song</div>
                 </div>
                 <div class="range-wrap">
-                  <input type="range" class="range-input" id="set-xfade" min="0" max="30" value="8" oninput="saveSetting('crossfade',this.value)">
-                  <span class="range-val" id="val-xfade">8s</span>
+                  <input type="range" class="range-input" id="set-xfade" min="0" max="30" value="5" oninput="saveSetting('crossfade',this.value)">
+                  <span class="range-val" id="val-xfade">5s</span>
                 </div>
               </div>
               <div class="settings-row">
@@ -2279,8 +2279,8 @@ html.p-narrow .np-right{display:none}
                   <div class="settings-label-sub">Seconds per song (0 = full song)</div>
                 </div>
                 <div class="range-wrap">
-                  <input type="range" class="range-input" id="set-timer" min="0" max="300" step="15" value="0" oninput="saveSetting('timer',this.value)">
-                  <span class="range-val" id="val-timer">Off</span>
+                  <input type="range" class="range-input" id="set-timer" min="0" max="300" step="5" value="40" oninput="saveSetting('timer',this.value)">
+                  <span class="range-val" id="val-timer">40s</span>
                 </div>
               </div>
               <div class="settings-row">
@@ -2737,7 +2737,7 @@ const S = {
   volume: 0.8,
   cuePoints: {}, // trackId -> {bingo, triviaS, triviaE} — GLOBAL default, set by anyone, visible to all
   cueOverrides: {}, // trackId -> {bingo, triviaS, triviaE} — PERSONAL to this host only
-  settings: { crossfade: 8, timer: 0, bpmMatch: true, cleanSkip: true, artEnabled: true, artSize: 44, fontSizeTable: 12, fontSizeSidebar: 13, fontSizeNav: 10 },
+  settings: { crossfade: 5, timer: 40, bpmMatch: true, cleanSkip: true, artEnabled: true, artSize: 44, fontSizeTable: 12, fontSizeSidebar: 13, fontSizeNav: 10 },
   sessionId: null,
   sessionStart: null,
   _allSessions: [],
@@ -6195,7 +6195,7 @@ async function saveDefaultSetting(k, v) {
   if (!db) return;
   try {
     const snap = await db.ref('player/settings/playback_default').once('value');
-    const cur = snap.val() || { crossfade:8, timer:0, bpmMatch:true, cleanSkip:true };
+    const cur = snap.val() || { crossfade:5, timer:40, bpmMatch:true, cleanSkip:true };
     cur[k] = v;
     await db.ref('player/settings/playback_default').set(cur);
     toast('Default updated — applies to new hosts only');
@@ -6213,7 +6213,7 @@ async function loadAdminData() {
   // ── Default settings (one-time read is fine here) ─────────────────────────
   try {
     const defSnap = await db.ref('player/settings/playback_default').once('value');
-    const def = defSnap.val() || { crossfade:8, timer:0, bpmMatch:true, cleanSkip:true };
+    const def = defSnap.val() || { crossfade:5, timer:40, bpmMatch:true, cleanSkip:true };
     const dxe=document.getElementById('def-xfade'), dte=document.getElementById('def-timer');
     if(dxe){ dxe.value=def.crossfade; document.getElementById('val-def-xfade').textContent=def.crossfade+'s'; }
     if(dte){ dte.value=def.timer; document.getElementById('val-def-timer').textContent=def.timer?def.timer+'s':'Off'; }
