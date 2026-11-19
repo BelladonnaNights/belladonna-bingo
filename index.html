@@ -127,6 +127,14 @@ html,body{min-height:100%;font-family:var(--font);background:var(--bg);color:var
 .cat-coming{font-size:11px;color:var(--text3);font-family:var(--serif);font-style:italic}
 .cat-arrow{position:absolute;top:10px;right:10px;background:rgba(10,10,10,.8);border:1px solid var(--gold-border);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--gold2);opacity:0;transition:opacity .2s}
 .cat-card:hover .cat-arrow{opacity:1}
+.cat-group{grid-column:1/-1;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface)}
+.cat-group>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:14px 18px;font-family:var(--cinzel);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold2)}
+.cat-group>summary::-webkit-details-marker{display:none}
+.cat-group>summary::before{content:'\25B8';color:var(--gold);font-size:12px}
+.cat-group[open]>summary::before{content:'\25BE'}
+.cat-group .gcount{margin-left:auto;font-size:11px;color:var(--text3);font-weight:400;letter-spacing:.06em}
+.cat-group-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px;padding:0 18px 18px}
+@media(max-width:640px){.cat-group-grid{grid-template-columns:1fr}}
 .empty{grid-column:1/-1;text-align:center;padding:5rem 1rem}
 .empty-icon{font-size:36px;margin-bottom:14px;display:block;color:var(--text3)}
 .empty-text{font-family:var(--serif);font-style:italic;color:var(--text3);font-size:16px}
@@ -326,6 +334,12 @@ html,body{scrollbar-width:thin!important;scrollbar-color:#c9a84c transparent!imp
             <option value="live">Live</option>
             <option value="coming">Coming soon</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Collapsible section <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <input class="form-input" type="text" id="f-group" list="group-list" autocomplete="off">
+          <datalist id="group-list"></datalist>
+          <div class="form-hint">Categories with the same section name are tucked into one collapsed section on this page, like Christmas. Leave it blank to keep the category in the main list.</div>
         </div>
         <div class="form-group">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--cinzel);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)">
@@ -757,7 +771,7 @@ function startBingoDataListeners(){
         var data = snap.val() || {};
         categories = Object.entries(data).map(function(e) { return Object.assign({id: e[0]}, e[1]); });
         categories.sort(function(a,b) { if (a.classicBingo && !b.classicBingo) return -1; if (!a.classicBingo && b.classicBingo) return 1; return (a.order||0)-(b.order||0); });
-        renderGrid(); buildFilterPills();
+        renderGrid(); buildFilterPills(); refreshGroupList();
         if (adminUnlocked) renderAdminList();
         reconcileLinkedCategories();
       });
@@ -1157,6 +1171,15 @@ function syncBannerToggle() { document.querySelectorAll('.banner-toggle-btn').fo
 window.addEventListener('resize', fitTextBanners);
 document.addEventListener('DOMContentLoaded', syncBannerToggle);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTextBanners);
+var grpOpen = {};
+try { grpOpen = JSON.parse(localStorage.getItem('bb_grp_open') || '{}') || {}; } catch (e) {}
+function refreshGroupList() {
+  var dl = document.getElementById('group-list'); if (!dl) return;
+  var seen = {}, names = [];
+  categories.forEach(function(c) { var g = String(c.group || '').trim(), k = g.toLowerCase(); if (g && !seen[k]) { seen[k] = 1; names.push(g); } });
+  names.sort(function(a, b) { return a.localeCompare(b); });
+  dl.innerHTML = names.map(function(n) { return '<option value="' + esc(n) + '">'; }).join('');
+}
 function renderGrid() {
   var q = document.getElementById('search-input').value.toLowerCase();
   var grid = document.getElementById('cat-grid');
@@ -1181,8 +1204,7 @@ function renderGrid() {
     grid.innerHTML = '<div class="empty"><span class="empty-icon">♪</span><div class="empty-text">' + (categories.length === 0 ? 'No playlists yet — open Admin to add your first one.' : 'No playlists match your search.') + '</div></div>';
     return;
   }
-  var html = '';
-  filtered.forEach(function(c) {
+  var card = function(c) {
     var isLive = c.status !== 'coming';
     var genres = getGenres(c);
     var appUrl = bingoLaunchUrl(c.id);
@@ -1194,9 +1216,31 @@ function renderGrid() {
     var comingHTML = !isLive ? '<span class="cat-coming">Coming soon</span>' : '';
     var arrowHTML = isLive ? '<div class="cat-arrow">→</div>' : '';
     var href = isLive ? appUrl : '#';
-    html += '<a class="cat-card' + (!isLive ? ' coming-soon' : '') + '" href="' + href + '" target="_self">' + imgHTML + (TEXT_BANNERS ? '' : '<div class="cat-body"><div class="cat-title">' + (c.fullCatalog ? '<span class="cat-star" title="Every song is in my catalog">&#9733;</span> ' : '') + c.title + '</div><div class="cat-meta">' + scheduledHTML + genreHTML + comingHTML + '</div></div>') + arrowHTML + '</a>';
+    return '<a class="cat-card' + (!isLive ? ' coming-soon' : '') + '" href="' + href + '" target="_self">' + imgHTML + (TEXT_BANNERS ? '' : '<div class="cat-body"><div class="cat-title">' + (c.fullCatalog ? '<span class="cat-star" title="Every song is in my catalog">&#9733;</span> ' : '') + c.title + '</div><div class="cat-meta">' + scheduledHTML + genreHTML + comingHTML + '</div></div>') + arrowHTML + '</a>';
+  };
+  // Categories with a "collapsible section" name are tucked into one closed section each (open automatically while searching, or when one is on tonight's schedule)
+  var searching = !!q || activeFilter !== 'all';
+  var plain = [], groups = {}, gkeys = [];
+  filtered.forEach(function(c) {
+    var g = String(c.group || '').trim();
+    if (!g) { plain.push(c); return; }
+    var k = g.toLowerCase();
+    if (!groups[k]) { groups[k] = { name: g, list: [] }; gkeys.push(k); }
+    groups[k].list.push(c);
+  });
+  gkeys.sort(function(a, b) { return groups[a].name.localeCompare(groups[b].name); });
+  var html = plain.map(card).join('');
+  gkeys.forEach(function(k) {
+    var g = groups[k];
+    var open = searching || grpOpen[k] || g.list.some(function(c) { return scheduledIds.indexOf(c.id) !== -1; });
+    html += '<details class="cat-group" data-gk="' + esc(k) + '"' + (open ? ' open' : '') + '><summary>' + esc(g.name) + '<span class="gcount">' + g.list.length + (g.list.length === 1 ? ' playlist' : ' playlists') + '</span></summary><div class="cat-group-grid">' + g.list.map(card).join('') + '</div></details>';
   });
   grid.innerHTML = html;
+  grid.querySelectorAll('details.cat-group').forEach(function(d) {
+    d.querySelector('summary').addEventListener('click', function() {
+      setTimeout(function() { grpOpen[d.dataset.gk] = d.open; try { localStorage.setItem('bb_grp_open', JSON.stringify(grpOpen)); } catch (e) {} fitTextBanners(); }, 0);
+    });
+  });
   fitTextBanners();
 }
 function buildFilterPills() {
@@ -1249,7 +1293,7 @@ function renderAdminList() {
   visible.forEach(function(c) {
     var thumb = c.image ? '<img class="admin-item-thumb" src="' + c.image + '" alt="' + c.title + '" onerror="this.style.background=\'var(--surface3)\'">' : '<div class="admin-item-thumb"></div>';
     var genres = getGenres(c);
-    var meta = (genres.length ? genres.join(', ') : 'No genre') + ' · ' + (c.status === 'coming' ? 'Coming soon' : 'Live') + ' · ' + vaultLinkLabel(c);
+    var meta = (c.group ? 'Section: ' + c.group + ' · ' : '') + (genres.length ? genres.join(', ') : 'No genre') + ' · ' + (c.status === 'coming' ? 'Coming soon' : 'Live') + ' · ' + vaultLinkLabel(c);
     html += '<div class="admin-item">' + thumb + '<div class="admin-item-info"><div class="admin-item-title">' + c.title + '</div><div class="admin-item-meta">' + meta + '</div></div><div class="admin-item-actions"><button class="btn-accent" onclick="editCategory(\'' + c.id + '\')">Edit</button><button class="btn btn-danger btn-sm" onclick="promptDelete(\'' + c.id + '\',\'' + c.title.replace(/'/g, "\\'") + '\')">✕</button></div></div>';
   });
   list.innerHTML = html;
@@ -1257,7 +1301,7 @@ function renderAdminList() {
 
 function updateSongCount() { vaultSelectChanged(); }
 function resetForm() {
-  ['edit-id','f-title','f-genre','f-image','f-square-image','f-songs','f-spotify','f-spotify-qr','f-vm-description','f-vm-banner'].forEach(function(id){ document.getElementById(id).value = ''; });
+  ['edit-id','f-title','f-group','f-genre','f-image','f-square-image','f-songs','f-spotify','f-spotify-qr','f-vm-description','f-vm-banner'].forEach(function(id){ document.getElementById(id).value = ''; });
   document.getElementById('f-classic-bingo').checked = false;
   document.getElementById('f-full-catalog').checked = false;
   document.getElementById('f-vm-show').checked = false;
@@ -1276,6 +1320,7 @@ function editCategory(id) {
   if (!c) return;
   document.getElementById('edit-id').value = id;
   document.getElementById('f-title').value = c.title || '';
+  document.getElementById('f-group').value = c.group || '';
   document.getElementById('f-genre').value = getGenres(c).join(', ');
   document.getElementById('f-image').value = c.image || '';
   document.getElementById('f-square-image').value = c.squareImage || '';
@@ -1344,7 +1389,7 @@ function saveCategory() {
     description: document.getElementById('f-vm-description').value.trim(),
     bannerUrl: document.getElementById('f-vm-banner').value.trim()
   };
-  var catData = {id:id, title:title, genres:genres, genre:genres[0]||'', image:document.getElementById('f-image').value.trim(), squareImage:document.getElementById('f-square-image').value.trim(), songs:songs, spotifyUrl:document.getElementById('f-spotify').value.trim(), spotifyQrUrl:document.getElementById('f-spotify-qr').value.trim(), status:document.getElementById('f-status').value, order:order, classicBingo:isClassic, venueMenu:venueMenu, vaultListId:(vaultListId && vaultListId!=='__new__') ? vaultListId : null, songFormat:songFormat};
+  var catData = {id:id, title:title, genres:genres, genre:genres[0]||'', image:document.getElementById('f-image').value.trim(), squareImage:document.getElementById('f-square-image').value.trim(), songs:songs, spotifyUrl:document.getElementById('f-spotify').value.trim(), spotifyQrUrl:document.getElementById('f-spotify-qr').value.trim(), status:document.getElementById('f-status').value, order:order, classicBingo:isClassic, venueMenu:venueMenu, vaultListId:(vaultListId && vaultListId!=='__new__') ? vaultListId : null, songFormat:songFormat, group:(document.getElementById('f-group').value.trim() || null)};
   // unified:true on brand-new categories so they show up in this same
   // library view immediately — that view only shows categories that have
   // been through the unification process, and a category made fresh here
