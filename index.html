@@ -120,7 +120,7 @@ html,body{min-height:100%;font-family:var(--font);background:var(--bg);color:var
 .cat-banner-placeholder{width:100%;aspect-ratio:1554/319;background:var(--surface2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border)}
 .cat-banner-placeholder span{font-family:var(--display);font-size:22px;letter-spacing:.1em;color:var(--text3)}
 .cat-body{padding:12px 16px 14px;border-top:1px solid var(--border)}
-.cat-star{color:var(--gold2);margin-right:2px}
+.cat-star{color:var(--gold2);margin-left:2px}
 .cat-title{font-family:var(--cinzel);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text);margin-bottom:5px}
 .cat-meta{display:flex;align-items:center;gap:8px}
 .cat-genre{font-size:10px;background:var(--gold-dim);border-radius:99px;padding:2px 10px;border:1px solid var(--gold-border);font-family:var(--cinzel);letter-spacing:.06em;text-transform:uppercase;color:var(--gold2)}
@@ -1208,7 +1208,7 @@ function renderGrid() {
     var isLive = c.status !== 'coming';
     var genres = getGenres(c);
     var appUrl = bingoLaunchUrl(c.id);
-    var imgHTML = TEXT_BANNERS ? textBannerHTML((c.fullCatalog ? '\u2605 ' : '') + c.title) : c.image
+    var imgHTML = TEXT_BANNERS ? textBannerHTML(c.title + (c.fullCatalog ? ' \u2605' : '')) : c.image
       ? '<img class="cat-banner" src="' + c.image + '" alt="' + c.title + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="cat-banner-placeholder" style="display:none"><span>' + c.title + '</span></div>'
       : '<div class="cat-banner-placeholder"><span>' + c.title + '</span></div>';
     var scheduledHTML = scheduledIds.indexOf(c.id) !== -1 ? '<span class="cat-genre" style="background:rgba(58,170,106,.18);border-color:rgba(58,170,106,.4);color:#3aaa6a">Tonight</span>' : '';
@@ -1216,7 +1216,7 @@ function renderGrid() {
     var comingHTML = !isLive ? '<span class="cat-coming">Coming soon</span>' : '';
     var arrowHTML = isLive ? '<div class="cat-arrow">→</div>' : '';
     var href = isLive ? appUrl : '#';
-    return '<a class="cat-card' + (!isLive ? ' coming-soon' : '') + '" href="' + href + '" target="_self">' + imgHTML + (TEXT_BANNERS ? '' : '<div class="cat-body"><div class="cat-title">' + (c.fullCatalog ? '<span class="cat-star" title="Every song is in my catalog">&#9733;</span> ' : '') + c.title + '</div><div class="cat-meta">' + scheduledHTML + genreHTML + comingHTML + '</div></div>') + arrowHTML + '</a>';
+    return '<a class="cat-card' + (!isLive ? ' coming-soon' : '') + '" href="' + href + '" target="_self">' + imgHTML + (TEXT_BANNERS ? '' : '<div class="cat-body"><div class="cat-title">' + c.title + (c.fullCatalog ? ' <span class="cat-star" title="Every song is in my catalog">&#9733;</span>' : '') + '</div><div class="cat-meta">' + scheduledHTML + genreHTML + comingHTML + '</div></div>') + arrowHTML + '</a>';
   };
   // Categories with a "collapsible section" name are tucked into one closed section each (open automatically while searching, or when one is on tonight's schedule)
   var searching = !!q || activeFilter !== 'all';
